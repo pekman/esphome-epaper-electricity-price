@@ -151,9 +151,10 @@ display:
       const float max_price =
         *std::max_element(prices.cbegin(), prices.cend());
 
-      // TODO: use space above y-grid
       const auto yticks = pleasing_ticks(
-        std::isfinite(max_price) ? std::ceil(max_price) : 0);
+        // Use space above top y-gridline.
+        // Calculate tick placement using a scaled top value.
+        std::ceil((max_price * GRAPH_YGRID_HEIGHT) / GRAPH_HEIGHT));
       const auto max_ygrid_val = yticks[0];
 
       auto prices_it = prices.cbegin();
