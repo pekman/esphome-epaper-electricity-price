@@ -207,30 +207,45 @@ display:
           now.day_of_year != start_date.day_of_year)
         prices_it += 24;
 
-      for (int hour=0, x = graph_margin_left;
+      // draw bars
+      for (int hour=0, left_x = graph_margin_left;
            prices_it != prices_end;
-           ++hour, ++prices_it, x += BAR_WIDTH)
+           ++hour, ++prices_it, left_x += BAR_WIDTH)
       {
         float height = std::round(
           GRAPH_YGRID_HEIGHT * *prices_it / max_ygrid_val);
         ESP_LOGD("electricity_price_display", "hour %02d: height = %f",
                  hour, height);
         if (std::isfinite(height) && height != 0.0f) {
-          if (height > 0.0f)
+          int x0 = left_x + 1;
+          int w = BAR_WIDTH - 1;
+
+          int y0, h;
+          if (height > 0.0f) {
+            y0 = GRAPH_HEIGHT - (int)height;
+            h = height;
+          } else {  // height < 0.0f
+            y0 = GRAPH_HEIGHT,
+            h = std::min(int(-height), graph_margin_bottom);
+          }
+
+          if (hour >= now.hour)
             it.filled_rectangle(
-              x + 1, GRAPH_HEIGHT - (int)height,
-              BAR_WIDTH-1, (int)height,
-              (hour == now.hour) ? color_red : display::COLOR_ON);
-          else  // height < 0.0f
-            it.filled_rectangle(
-              x + 1, GRAPH_HEIGHT,
-              BAR_WIDTH-1, std::min(int(-height), graph_margin_bottom),
-              (hour == now.hour) ? color_red : display::COLOR_ON);
+              x0, y0, w, h,
+              hour == now.hour ? color_red : display::COLOR_ON);
+          else
+            // draw dithered gray rectangle
+            for (int y = y0; y < y0+h; ++y)
+              for (int x = x0; x < x0+w; ++x)
+                if ((x & 1) ^ (y & 1))  // every 2nd pixel
+                  it.draw_pixel_at(x, y, display::COLOR_ON);
         }
 
-        if (hour == now.hour)
+        // draw current hour indicator
+        if (hour == now.hour) {
+          int center_x = left_x + BAR_WIDTH/2;
           for (int y=1; y < screen_height; y += 2)
-            it.draw_pixel_at(x + (BAR_WIDTH+1)/2, y, color_red);
+            it.draw_pixel_at(center_x, y, color_red);
       }
 
       struct axis_label { int pos; const char* label; };
