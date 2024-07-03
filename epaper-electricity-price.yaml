@@ -171,19 +171,26 @@ display:
            prices_it != prices_end;
            ++hour, ++prices_it, x += BAR_WIDTH)
       {
-        // TODO: price < 0
         float height = std::round(
           GRAPH_YGRID_HEIGHT * *prices_it / max_ygrid_val);
         ESP_LOGD("electricity_price_display", "hour %02d: height = %f",
                  hour, height);
-        if (std::isfinite(height))
-          it.filled_rectangle(
-            x + 1, GRAPH_HEIGHT - (int)height,
-            BAR_WIDTH-1, (int)height,
-            (hour == now.hour) ? color_red : display::COLOR_ON);
-          if (hour == now.hour)
-            for (int y=1; y < screen_height; y += 2)
-              it.draw_pixel_at(x + (BAR_WIDTH+1)/2, y, color_red);
+        if (std::isfinite(height) && height != 0.0f) {
+          if (height > 0.0f)
+            it.filled_rectangle(
+              x + 1, GRAPH_HEIGHT - (int)height,
+              BAR_WIDTH-1, (int)height,
+              (hour == now.hour) ? color_red : display::COLOR_ON);
+          else  // height < 0.0f
+            it.filled_rectangle(
+              x + 1, GRAPH_HEIGHT,
+              BAR_WIDTH-1, std::min(int(-height), graph_margin_bottom),
+              (hour == now.hour) ? color_red : display::COLOR_ON);
+        }
+
+        if (hour == now.hour)
+          for (int y=1; y < screen_height; y += 2)
+            it.draw_pixel_at(x + (BAR_WIDTH+1)/2, y, color_red);
       }
 
       struct axis_label { int pos; const char* label; };
