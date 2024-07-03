@@ -165,6 +165,8 @@ display:
       // possible (and also 7 and 9 as a secondary objective)
       const int GRAPH_YGRID_HEIGHT = 100;
 
+      const int HOUR_INDICATOR_HEIGHT = 4;
+
       const int GRAPH_WIDTH = 48*BAR_WIDTH;
       const int GRAPH_HEIGHT = GRAPH_YGRID_HEIGHT + GRAPH_MARGIN_TOP;
       static const int screen_width = disp.get_width();
@@ -212,21 +214,24 @@ display:
            prices_it != prices_end;
            ++hour, ++prices_it, left_x += BAR_WIDTH)
       {
-        float height = std::round(
+        float height_f = std::round(
           GRAPH_YGRID_HEIGHT * *prices_it / max_ygrid_val);
         ESP_LOGD("electricity_price_display", "hour %02d: height = %f",
-                 hour, height);
-        if (std::isfinite(height) && height != 0.0f) {
+                 hour, height_f);
+        int height = std::isfinite(height_f) ? height_f : 0;
+
+        // draw bar
+        if (height != 0) {
           int x0 = left_x + 1;
           int w = BAR_WIDTH - 1;
 
           int y0, h;
-          if (height > 0.0f) {
-            y0 = GRAPH_HEIGHT - (int)height;
+          if (height > 0) {
+            y0 = GRAPH_HEIGHT - height;
             h = height;
-          } else {  // height < 0.0f
+          } else {  // height < 0
             y0 = GRAPH_HEIGHT,
-            h = std::min(int(-height), graph_margin_bottom);
+            h = std::min(-height, graph_margin_bottom);
           }
 
           if (hour >= now.hour)
@@ -246,6 +251,20 @@ display:
           int center_x = left_x + BAR_WIDTH/2;
           for (int y=1; y < screen_height; y += 2)
             it.draw_pixel_at(center_x, y, color_red);
+
+          // draw triangle at bottom and also at top if it doesn't
+          // overlap with price bar
+          for (int y = screen_height - HOUR_INDICATOR_HEIGHT,
+                   x = center_x, w = 1;
+               y < screen_height;
+               ++y, --x, w += 2)
+            it.horizontal_line(x, y, w, color_red);
+          if (GRAPH_HEIGHT - height > HOUR_INDICATOR_HEIGHT)
+            for (int y = HOUR_INDICATOR_HEIGHT - 1, x = center_x, w = 1;
+                 y >= 0;
+                 --y, --x, w += 2)
+              it.horizontal_line(x, y, w, color_red);
+        }
       }
 
       struct axis_label { int pos; const char* label; };
