@@ -5,6 +5,23 @@ esphome:
   includes:
     - "ticks.h"
 
+  on_boot:
+    - priority: 10000  # as early as possible
+      then:
+        - lambda: |-
+            // initialize hourly_prices with NaNs to indicate no data
+            for (float& price : id(hourly_prices))
+              price = NAN;
+
+    - priority: -100  # when everything else should already be initialized
+      then:
+        - logger.log: "Setting up initial data update check"
+        - delay: 5min
+        - lambda: |-
+            // if no data yet received, update display to show alert
+            if (!id(prices_start_date).is_valid())
+              id(epaper).update();
+
 esp8266:
   board: nodemcuv2
 
@@ -41,11 +58,15 @@ network:
 globals:
   - id: hourly_prices
     type: "std::array<float, 48>"
+    # initialized to NaN in on_boot
     # TODO: maybe use fixed point instead; no native float in ESP8266
+
   - id: prices_start_date
     type: "ESPTime"
-    # # initialize to a time whose is_valid() == false
-    # initial_value: "ESPTime::from_epoch_utc(0)"
+    # Initialize to a time whose is_valid() == false.
+    # Invalid time means that initial data has not yet been received.
+    initial_value: "ESPTime::from_epoch_utc(0)"
+
   - id: update_on_time_sync
     type: "bool"
     initial_value: "false"
@@ -112,6 +133,11 @@ font:
     size: 15
     glyphs: "0123456789,"
 
+image:
+  - file: "mdi:robot-dead-outline"
+    id: no_data_icon
+    resize: 128x128
+
 
 spi:
   clk_pin: D1
@@ -148,8 +174,22 @@ display:
 
       const auto& prices = id(hourly_prices);
 
-      const float max_price =
-        *std::max_element(prices.cbegin(), prices.cend());
+      float max_price = -INFINITY;
+      // Calculate max value NaN-safely.
+      // If all values are NaN, max_price = -INFINITY.
+      for (float price : prices)
+        if (price > max_price)
+          max_price = price;
+
+      // show alert icon if no actual values
+      if (!std::isfinite(max_price)) {
+        ESP_LOGW("electricity_price_display", "No data!");
+        it.image(
+          screen_width / 2, screen_height / 2,
+          id(no_data_icon),
+          ImageAlign::CENTER);
+        return;
+      }
 
       const auto yticks = pleasing_ticks(
         // Use space above top y-gridline.
@@ -250,7 +290,9 @@ time:
       minutes: 0
       then:
         - lambda: |-
-            id(epaper).update();
+            // update display, unless we're still waiting for initial data
+            if (id(prices_start_date).is_valid())
+              id(epaper).update();
     on_time_sync:
       then:
         - lambda: |-
