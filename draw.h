@@ -168,12 +168,12 @@ static void draw(T& it) {
       it.draw_pixel_at(x, y);
     it.horizontal_line(graph_margin_left - 4, y, 4);
     it.print(
-      graph_margin_left - 4 - 1, y,
+      graph_margin_left - 4 - 2, y,
       font, TextAlign::CENTER_RIGHT,
       label);
     it.horizontal_line(graph_margin_left + GRAPH_WIDTH, y, 4);
     it.print(
-      graph_margin_left + GRAPH_WIDTH + 4 + 1, y,
+      graph_margin_left + GRAPH_WIDTH + 4 + 2, y,
       font, TextAlign::CENTER_LEFT,
       label);
   }

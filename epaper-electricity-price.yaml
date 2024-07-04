@@ -139,10 +139,10 @@ color:
 font:
   - # note: Font rendering is terribly ugly for some fonts, such as
     # Roboto and Open Sans. Arial seems to work nicely.
-    file: "arial.ttf"
+    file: "arialn.ttf"  # Arial Narrow
     id: main_font
-    size: 15
-    glyphs: "0123456789,"
+    size: 18
+    glyphs: "0123456789"
 
 image:
   - file: "mdi:robot-dead-outline"
