@@ -15,7 +15,7 @@ static std::vector<int> pleasing_ticks(int max_val) {
   float order_of_magnitude = std::floor(std::log10((float)max_val));
   int first_digit = std::ceil(max_val / std::pow(10, order_of_magnitude));
   int top = first_digit * std::pow(10, order_of_magnitude);
-  ESP_LOGD("ticks", "first digit = %d  top = %d", first_digit, top);
+  ESP_LOGV("ticks", "first digit = %d  top = %d", first_digit, top);
 
   switch (first_digit) {
   case 1: case 10:  // 10 8 6 4 2

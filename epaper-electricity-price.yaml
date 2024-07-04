@@ -78,13 +78,15 @@ api:
     - service: set_prices
       variables:
         prices: float[]  # prices in cents
-        start_year: int   #
-        start_month: int  # date of first values
-        start_day: int    #
+        start_year: int   #⎫
+        start_month: int  #⎬ date of first values
+        start_day: int    #⎭
       then:
         - lambda: |-
-            ESP_LOGI(
-              "electricity_price_display", "new prices received: %s",
+            ESP_LOGI("set_prices", "New prices received: %u items",
+                     prices.size());
+            ESP_LOGV(
+              "set_prices", "Received prices: %s",
               [&]() {
                 std::string str;
                 for (float price : prices) {
@@ -96,15 +98,10 @@ api:
 
             auto& dest = id(hourly_prices);
 
-            auto len = prices.size();
-            if (len < dest.size())
+            if (prices.size() > dest.size())
               ESP_LOGW(
-              "electricity_price_display", "Fewer than %d items",
-              dest.size());
-            else if (len > dest.size())
-              ESP_LOGW(
-                "electricity_price_display",
-                "More than %d items. Ignoring rest.", dest.size());
+                "set_prices", "More than %u items received. Discarding rest.",
+                dest.size());
 
             auto dest_it = dest.begin();
             auto end = dest.end();
@@ -128,7 +125,7 @@ api:
             }
             else {
               ESP_LOGD(
-                "electricity_price_display",
+                "set_prices",
                 "Clock not yet set. Waiting for time synchronization"
                 " before updating display.");
               id(update_on_time_sync) = true;
@@ -188,7 +185,7 @@ time:
             if (id(update_on_time_sync)) {
               id(update_on_time_sync) = false;
               ESP_LOGD(
-                "electricity_price_display",
+                "on_time_sync",
                 "Time synchronized. Running deferred display update.");
               id(epaper).update();
             }

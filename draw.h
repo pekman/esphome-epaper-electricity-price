@@ -50,10 +50,8 @@ static void draw(T& it) {
     }
     else {
       prices_it = prices_end;
-      ESP_LOGW(
-        "electricity_price_display",
-        "No data available for today. Data starts at %s",
-        start_date.strftime(std::string("%F %T%z")).c_str());
+      ESP_LOGW("draw", "No data available for today. Data starts at %s",
+               start_date.strftime(std::string("%F %T%z")).c_str());
     }
   }
 
@@ -66,11 +64,12 @@ static void draw(T& it) {
 
   // show alert icon if no actual values
   if (!std::isfinite(max_price)) {
-    ESP_LOGW("electricity_price_display", "No data!");
+    ESP_LOGW("draw", "No data!");
     it.image(
       screen_width / 2, screen_height / 2,
       &id(no_data_icon),
       ImageAlign::CENTER);
+    ESP_LOGD("draw", "Finished drawing.");
     return;
   }
 
@@ -87,8 +86,8 @@ static void draw(T& it) {
     {
       float height_f = std::round(
         GRAPH_YGRID_HEIGHT * *prices_it / max_ygrid_val);
-      ESP_LOGD("electricity_price_display", "hour %02d: height = %f",
-               hour, height_f);
+      ESP_LOGV("draw", "hour %02d: value = %g, height = %g px",
+               hour, *prices_it, height_f);
       int height = std::isfinite(height_f) ? height_f : 0;
 
       // draw bar
@@ -184,4 +183,6 @@ static void draw(T& it) {
        x < GRAPH_WIDTH + graph_margin_left + 4;
        x += 3)
     it.draw_pixel_at(x, GRAPH_HEIGHT);
+
+  ESP_LOGD("draw", "Finished drawing.");
 }
