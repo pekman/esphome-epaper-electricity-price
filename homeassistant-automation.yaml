@@ -5,7 +5,9 @@ trigger:
   - platform: state
     entity_id: sensor.nordpool
     attribute: tomorrow
-  # TODO: send data when esphome device starts
+  - platform: state
+    entity_id: binary_sensor.electricity_price_display_status
+    to: "on"
 variables:
   entity_id: sensor.nordpool
 action:

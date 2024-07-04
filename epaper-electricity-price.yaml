@@ -134,6 +134,7 @@ api:
               id(update_on_time_sync) = true;
             }
 
+
 color:
   - id: red
     hex: "FF0000"
@@ -191,3 +192,8 @@ time:
                 "Time synchronized. Running deferred display update.");
               id(epaper).update();
             }
+
+
+binary_sensor:
+  - platform: status
+    name: status
