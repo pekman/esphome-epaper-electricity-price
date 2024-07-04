@@ -1,0 +1,22 @@
+alias: "Update electricity price display"
+description: >-
+  Update electricity price display when price sensor receives new values
+trigger:
+  - platform: state
+    entity_id: sensor.nordpool
+    attribute: tomorrow
+  # TODO: send data when esphome device starts
+variables:
+  entity_id: sensor.nordpool
+action:
+  - service: esphome.electricity_price_display_set_prices
+    data: |-
+      {% set start = state_attr(entity_id, "raw_today")[0].start -%}
+      {
+        "prices": {{ state_attr(entity_id, "today") +
+                     state_attr(entity_id, "tomorrow")|default([]) }},
+        "start_year": {{ start.year }},
+        "start_month": {{ start.month }},
+        "start_day": {{ start.day }}
+      }
+mode: single
