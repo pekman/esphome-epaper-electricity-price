@@ -78,6 +78,9 @@ api:
     - service: set_prices
       variables:
         prices: float[]  # prices in cents
+        start_year: int   #
+        start_month: int  # date of first values
+        start_day: int    #
       then:
         - lambda: |-
             ESP_LOGI(
@@ -113,14 +116,23 @@ api:
             for (; dest_it != end; ++dest_it)
               *dest_it = NAN;
 
-            auto now = id(homeassistant_time).now();
-            if (now.is_valid()) {
-              id(prices_start_date) = now;
+            ESPTime& start = id(prices_start_date);
+            start.year = start_year;
+            start.month = start_month;
+            start.day_of_month = start_day;
+            start.hour = start.minute = start.second = 0;
+            start.recalc_timestamp_local(false);
+
+            if (id(homeassistant_time).now().is_valid()) {
               id(epaper).update();
-            } else {
+            }
+            else {
+              ESP_LOGD(
+                "electricity_price_display",
+                "Clock not yet set. Waiting for time synchronization"
+                " before updating display.");
               id(update_on_time_sync) = true;
             }
-
 
 color:
   - id: red
@@ -174,6 +186,8 @@ time:
         - lambda: |-
             if (id(update_on_time_sync)) {
               id(update_on_time_sync) = false;
-              id(prices_start_date) = id(homeassistant_time).now();
+              ESP_LOGD(
+                "electricity_price_display",
+                "Time synchronized. Running deferred display update.");
               id(epaper).update();
             }

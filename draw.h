@@ -28,13 +28,41 @@ static void draw(T& it) {
   const Color& color_red = id(red);
 
   const auto& prices = id(hourly_prices);
+  auto prices_it = prices.cbegin();
+  const auto prices_end = prices.cend();
+
+  // prices contains values for 2 days. If we're at 2nd day, skip 1st
+  // day. If we're even further ahead, then we have no usable data.
+  ESPTime now = id(homeassistant_time).now();
+  ESPTime& start_date = id(prices_start_date);
+  if (now.year != start_date.year ||
+      now.month != start_date.month ||
+      now.day_of_month != start_date.day_of_month)
+  {
+    ESPTime next_day_from_start(start_date);
+    next_day_from_start.increment_day();
+
+    if (now.year == next_day_from_start.year &&
+        now.month == next_day_from_start.month &&
+        now.day_of_month == next_day_from_start.day_of_month)
+    {
+      prices_it += 24;
+    }
+    else {
+      prices_it = prices_end;
+      ESP_LOGW(
+        "electricity_price_display",
+        "No data available for today. Data starts at %s",
+        start_date.strftime(std::string("%F %T%z")).c_str());
+    }
+  }
 
   float max_price = -INFINITY;
   // Calculate max value NaN-safely.
-  // If all values are NaN, max_price = -INFINITY.
-  for (float price : prices)
-    if (price > max_price)
-      max_price = price;
+  // If there are no non-NaN values, max_price = -INFINITY.
+  for (auto it = prices_it; it != prices_end; ++it)
+    if (*it > max_price)
+      max_price = *it;
 
   // show alert icon if no actual values
   if (!std::isfinite(max_price)) {
@@ -51,16 +79,6 @@ static void draw(T& it) {
     // Calculate tick placement using a scaled top value.
     std::ceil((max_price * GRAPH_YGRID_HEIGHT) / GRAPH_HEIGHT));
   const auto max_ygrid_val = yticks[0];
-
-  auto prices_it = prices.cbegin();
-  const auto prices_end = prices.cend();
-
-  // prices comprises 2 days of data. If we're at 2nd day, skip 1st day.
-  auto now = id(homeassistant_time).now();
-  auto start_date = id(prices_start_date);
-  if (now.year != start_date.year ||
-      now.day_of_year != start_date.day_of_year)
-    prices_it += 24;
 
   // draw bars
   for (int hour=0, left_x = graph_margin_left;
@@ -82,7 +100,8 @@ static void draw(T& it) {
         if (height > 0) {
           y0 = GRAPH_HEIGHT - height;
           h = height;
-        } else {  // height < 0
+        }
+        else {  // height < 0
           y0 = GRAPH_HEIGHT,
             h = std::min(-height, graph_margin_bottom);
         }
