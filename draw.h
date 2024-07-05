@@ -4,6 +4,9 @@
 
 #include <esphome.h>
 
+#include "ticks.h"
+#include "dither.h"
+
 
 template<typename T>
 static void draw(T& it) {
@@ -79,43 +82,29 @@ static void draw(T& it) {
     std::ceil((max_price * GRAPH_YGRID_HEIGHT) / GRAPH_HEIGHT));
   const auto max_ygrid_val = yticks[0];
 
+  BlackRedBars dithered_bar_drawer(
+    0,                 // TODO: use configurable values
+    GRAPH_HEIGHT - 1,  //
+    GRAPH_HEIGHT,  // base y
+    screen_height,  // y limit
+    BAR_WIDTH - 1);  // bar width
+
   // draw bars
   for (int hour=0, left_x = graph_margin_left;
        prices_it != prices_end;
        ++hour, ++prices_it, left_x += BAR_WIDTH)
     {
-      float height_f = std::round(
+      float height = std::round(
         GRAPH_YGRID_HEIGHT * *prices_it / max_ygrid_val);
       ESP_LOGV("draw", "hour %02d: value = %g, height = %g px",
-               hour, *prices_it, height_f);
-      int height = std::isfinite(height_f) ? height_f : 0;
+               hour, *prices_it, height);
 
       // draw bar
-      if (height != 0) {
-        int x0 = left_x + 1;
-        int w = BAR_WIDTH - 1;
-
-        int y0, h;
-        if (height > 0) {
-          y0 = GRAPH_HEIGHT - height;
-          h = height;
-        }
-        else {  // height < 0
-          y0 = GRAPH_HEIGHT,
-            h = std::min(-height, graph_margin_bottom);
-        }
-
-        if (hour >= now.hour)
-          it.filled_rectangle(
-            x0, y0, w, h,
-            hour == now.hour ? color_red : display::COLOR_ON);
-        else
-          // draw dithered gray rectangle
-          for (int y = y0; y < y0+h; ++y)
-            for (int x = x0; x < x0+w; ++x)
-              if ((x & 1) ^ (y & 1))  // every 2nd pixel
-                it.draw_pixel_at(x, y, display::COLOR_ON);
-      }
+      if (std::isfinite(height))
+        dithered_bar_drawer.draw_bar(
+          left_x + 1, height,
+          hour == now.hour,  // red if current hour
+          hour < now.hour);  // greyed out if in the past
 
       // draw current hour indicator
       if (hour == now.hour) {

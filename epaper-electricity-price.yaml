@@ -4,6 +4,8 @@ esphome:
 
   includes:
     - "ticks.h"
+    - "dithermask.h"
+    - "dither.h"
     - "draw.h"
 
   on_boot:
