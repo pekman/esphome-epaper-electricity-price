@@ -82,9 +82,20 @@ static void draw(T& it) {
     std::ceil((max_price * GRAPH_YGRID_HEIGHT) / GRAPH_HEIGHT));
   const auto max_ygrid_val = yticks[0];
 
+  float pixels_per_cent = float(GRAPH_YGRID_HEIGHT) / float(max_ygrid_val);
+  float gradient_top_px =
+    GRAPH_HEIGHT - (id(gradient_top).state * pixels_per_cent);
+  float gradient_bottom_px =
+    GRAPH_HEIGHT - (id(gradient_bottom).state * pixels_per_cent);
+  ESP_LOGD(
+    "draw", "gradient: %g...%g c => %g...%g px",
+    id(gradient_bottom).state,
+    id(gradient_top).state,
+    gradient_bottom_px,
+    gradient_top_px);
+
   BlackRedBars dithered_bar_drawer(
-    0,                 // TODO: use configurable values
-    GRAPH_HEIGHT - 1,  //
+    gradient_top_px, gradient_bottom_px,
     GRAPH_HEIGHT,  // base y
     screen_height,  // y limit
     BAR_WIDTH - 1);  // bar width

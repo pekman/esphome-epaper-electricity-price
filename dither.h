@@ -1,5 +1,8 @@
 #pragma once
 
+#include <cmath>
+#include <climits>
+
 #include <esphome.h>
 
 #include "dithermask.h"
@@ -26,14 +29,18 @@ class BlackRedBars {
 
 public:
   BlackRedBars(
-    int gradient_top, int gradient_bottom,
+    float gradient_top, float gradient_bottom,
     int base_y, int y_limit,
     int bar_width)
     : display(id(epaper))
     , color_red(id(red))
     , color_black(esphome::display::COLOR_ON)
-    , gradient_top(gradient_top)
-    , gradient_bottom(gradient_bottom)
+    , gradient_top(std::isfinite(gradient_top)
+                   ? (int) std::round(gradient_top)
+                   : INT_MAX)
+    , gradient_bottom(std::isfinite(gradient_bottom)
+                      ? (int) std::round(gradient_bottom)
+                      : INT_MAX)
     , base_y(base_y)
     , y_limit(y_limit)
     , bar_width(bar_width)

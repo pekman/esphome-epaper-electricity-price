@@ -27,6 +27,7 @@ esphome:
 
 esp8266:
   board: nodemcuv2
+  restore_from_flash: true
 
 # Enable logging
 logger:
@@ -167,6 +168,43 @@ display:
     rotation: 90
     update_interval: never
     lambda: "draw(it);"  # call code in draw.h
+
+
+number:
+  - platform: template
+    id: gradient_top
+    name: "Gradient top price"
+    entity_category: config
+    unit_of_measurement: c
+    mode: box
+    device_class: monetary
+    icon: "mdi:gradient-vertical"
+    optimistic: true
+    min_value: -10000
+    max_value: 10000
+    step: 1
+    restore_value: true
+    initial_value: 40
+    on_value:
+      then:
+        - component.update: epaper
+  - platform: template
+    id: gradient_bottom
+    name: "Gradient bottom price"
+    entity_category: config
+    unit_of_measurement: c
+    mode: box
+    device_class: monetary
+    icon: "mdi:gradient-vertical"
+    optimistic: true
+    min_value: -10000
+    max_value: 10000
+    step: 1
+    restore_value: true
+    initial_value: 20
+    on_value:
+      then:
+        - component.update: epaper
 
 
 time:
