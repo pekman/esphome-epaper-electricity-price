@@ -10,7 +10,12 @@
 
 static bool apply_dither_mask(int x, int y, uint8_t value) {
   uint8_t threshold =
+#ifdef USE_ESP8266
+    // ESP8266 requires special handling for PROGMEM data
+    pgm_read_byte(&DITHER_MASK[y % DITHER_MASK_HEIGHT][x % DITHER_MASK_WIDTH]);
+#else
     DITHER_MASK[y % DITHER_MASK_HEIGHT][x % DITHER_MASK_WIDTH];
+#endif
   return value > threshold;
 }
 

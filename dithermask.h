@@ -2,11 +2,20 @@
 
 #include <stdint.h>
 
+#ifdef USE_ESP8266
+#include <pgmspace.h>
+#endif
+
 // blue noise dither mask from
 // https://github.com/jdupuy/BlueNoiseDitherMaskTiles/blob/master/examples/mask_128_128.png
 
-// TODO: put this in PROGMEM to save RAM
-static const uint8_t DITHER_MASK[128][128] = {
+static const uint8_t DITHER_MASK[128][128]
+#ifdef USE_ESP8266
+// ESP8266 requires special handling to keep this in flash and not to
+// waste RAM (without this, the whole array would be copied to RAM)
+PROGMEM
+#endif
+= {
     0, 231, 46, 221, 15, 36, 203, 96, 2, 209, 63, 253, 9, 210, 99,
     194, 165, 251, 124, 219, 104, 16, 187, 35, 69, 204, 183, 27, 152,
     178, 237, 207, 50, 76, 116, 155, 180, 23, 228, 207, 159, 193, 245,
