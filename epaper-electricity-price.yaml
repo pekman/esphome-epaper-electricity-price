@@ -156,6 +156,10 @@ image:
     id: no_data_icon
     resize: 128x128
 
+  - file: "price-alert.svg"
+    type: TRANSPARENT_BINARY
+    id: price_alert_icon
+    resize: 50x44
 
 spi:
   clk_pin: D1

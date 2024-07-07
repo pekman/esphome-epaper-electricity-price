@@ -110,6 +110,21 @@ static void draw(T& it) {
       0, CUR_PRICE_TOP + price_font->get_height() + 3,
       font, TextAlign::TOP_LEFT,
       u8"c\u200A/\u200AkWh");  // U+200A = hair space
+
+    // Show warning if price too high. Use gradient values. If within
+    // gradient, show black icon. If above gradient, show red icon.
+    if (price >= id(gradient_bottom).state) {
+      esphome::image::Image* img = &id(price_alert_icon);
+      bool center = img->get_width() < CUR_PRICE_WIDTH;
+      it.image(
+        center ? CUR_PRICE_WIDTH/2 : 0,
+        screen_height - 1,
+        img,
+        center ? ImageAlign::BOTTOM_CENTER : ImageAlign::BOTTOM_LEFT,
+        price < id(gradient_top).state
+        ? esphome::display::COLOR_ON
+        : color_red);
+    }
   }
 
   // calculate and draw graph

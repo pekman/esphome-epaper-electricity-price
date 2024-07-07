@@ -3,3 +3,4 @@
 
 # don't include non-free font; it needs to be downloaded
 /arialn.ttf
+/arial.ttf

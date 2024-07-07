@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 88">
+  <style>
+    @font-face {
+      font-family: "Arial";
+      src: url("arial.ttf");
+    }
+    text {
+      font-family: Arial, sans-serif;
+      font-size: 48px;
+    }
+  </style>
+  <!--
+      t = line thickness
+      w, h = viewBox size
+      M: w/2, h - t/2 - (w - t*√3)*√3/2  (= h + t - w*√3/2 )
+      L: t*√3/2, h - t/2
+      h: w - t*√3
+      z
+  -->
+  <path d="M 50,11.39746
+           L 8.660254,83
+           h 82.679492
+           z"
+        fill="none"
+        stroke="black"
+        stroke-width="10"
+        stroke-linejoin="miter" />
+  <text x="48" y="75" text-anchor="middle">€</text>
+</svg>
