@@ -148,9 +148,9 @@ static void draw(T& it) {
     int x = graph_margin_left + hour*BAR_WIDTH;
     for (int y=0; y < GRAPH_HEIGHT; y += 3)
       it.draw_pixel_at(x, y);
-    it.vertical_line(x, screen_height - graph_margin_bottom , 3);
+    it.vertical_line(x, screen_height - graph_margin_bottom, 5);
     it.print(
-      x, screen_height - graph_margin_bottom  + 4,
+      x, screen_height - graph_margin_bottom + 4,
       font, TextAlign::TOP_CENTER,
       label);
   }
