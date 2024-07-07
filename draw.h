@@ -11,7 +11,7 @@
 template<typename T>
 static void draw(T& it) {
 
-  const int BAR_WIDTH = 5;
+  const int BAR_WIDTH = 4;
   const int GRAPH_MARGIN_TOP = 6;  // space for topmost axis label
 
   // This should be divisible by as many of 2, 3, 4, and 5 as
@@ -20,14 +20,22 @@ static void draw(T& it) {
 
   const int HOUR_INDICATOR_HEIGHT = 4;
 
+  const int CUR_PRICE_TOP = 10;
+  const int CUR_PRICE_WIDTH = 48;
+
+  // this should be in font[].glyphs in the yaml file:
+  const char DECIMAL_SEPARATOR = ',';
+
   const int GRAPH_WIDTH = 48*BAR_WIDTH;
   const int GRAPH_HEIGHT = GRAPH_YGRID_HEIGHT + GRAPH_MARGIN_TOP;
   static const int screen_width = it.get_width();
-  static const int graph_margin_left = (screen_width - GRAPH_WIDTH)/2;
+  static const int graph_left =
+    CUR_PRICE_WIDTH + (screen_width - CUR_PRICE_WIDTH - GRAPH_WIDTH)/2;
   static const int screen_height = it.get_height();
   static const int graph_margin_bottom = screen_height - GRAPH_HEIGHT;
 
   esphome::font::Font* font = &id(main_font);
+  esphome::font::Font* price_font = &id(cur_price_font);
   const Color& color_red = id(red);
 
   const auto& prices = id(hourly_prices);
@@ -76,6 +84,36 @@ static void draw(T& it) {
     return;
   }
 
+  // print current price
+  {
+    float price = now.hour >= 0 && now.hour < 24
+      ? prices_it[now.hour]
+      : NAN;  // this shouldn't happen, but let's not crash if it does
+    char str[16];
+    snprintf(
+      str, sizeof(str), "%.*f",
+      price < 10.0f && price > -10.0f ? 1 : 0,
+      price);
+    for (char& c : str) {
+      if (c == '\0')
+        break;
+      if (c == '.') {
+        c = DECIMAL_SEPARATOR;
+        break;
+      }
+    }
+    it.print(
+      0, CUR_PRICE_TOP,
+      price_font, TextAlign::TOP_LEFT,
+      str);
+    it.print(
+      0, CUR_PRICE_TOP + price_font->get_height() + 3,
+      font, TextAlign::TOP_LEFT,
+      u8"c\u200A/\u200AkWh");  // U+200A = hair space
+  }
+
+  // calculate and draw graph
+
   const auto yticks = pleasing_ticks(
     // Use space above top y-gridline.
     // Calculate tick placement using a scaled top value.
@@ -101,7 +139,7 @@ static void draw(T& it) {
     BAR_WIDTH - 1);  // bar width
 
   // draw bars
-  for (int hour=0, left_x = graph_margin_left;
+  for (int hour=0, left_x = graph_left;
        prices_it != prices_end;
        ++hour, ++prices_it, left_x += BAR_WIDTH)
     {
@@ -145,7 +183,7 @@ static void draw(T& it) {
     {24, "00"}, {30, "06"}, {36, "12"}, {42, "18"},
     {48, "00"}
   }) {
-    int x = graph_margin_left + hour*BAR_WIDTH;
+    int x = graph_left + hour*BAR_WIDTH;
     for (int y=0; y < GRAPH_HEIGHT; y += 3)
       it.draw_pixel_at(x, y);
     it.vertical_line(x, screen_height - graph_margin_bottom, 5);
@@ -162,26 +200,22 @@ static void draw(T& it) {
     auto label_str = std::to_string(tick_val);
     const char* label = label_str.c_str();
 
-    for (int x = graph_margin_left;
-         x < GRAPH_WIDTH + graph_margin_left;
-         x += 3)
+    for (int x = graph_left; x < graph_left + GRAPH_WIDTH; x += 3)
       it.draw_pixel_at(x, y);
-    it.horizontal_line(graph_margin_left - 4, y, 4);
+    it.horizontal_line(graph_left - 4, y, 4);
     it.print(
-      graph_margin_left - 4 - 2, y,
+      graph_left - 4 - 2, y,
       font, TextAlign::CENTER_RIGHT,
       label);
-    it.horizontal_line(graph_margin_left + GRAPH_WIDTH, y, 4);
+    it.horizontal_line(graph_left + GRAPH_WIDTH, y, 4);
     it.print(
-      graph_margin_left + GRAPH_WIDTH + 4 + 2, y,
+      graph_left + GRAPH_WIDTH + 4 + 2, y,
       font, TextAlign::CENTER_LEFT,
       label);
   }
   // gridline 0 without text or solid tick lines
   // (text would overlap with x-axis labels)
-  for (int x = graph_margin_left - 4;
-       x < GRAPH_WIDTH + graph_margin_left + 4;
-       x += 3)
+  for (int x = graph_left - 4; x < graph_left + GRAPH_WIDTH + 4; x += 3)
     it.draw_pixel_at(x, GRAPH_HEIGHT);
 
   ESP_LOGD("draw", "Finished drawing.");

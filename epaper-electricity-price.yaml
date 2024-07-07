@@ -140,12 +140,16 @@ color:
     hex: "FF0000"
 
 font:
-  - # note: Font rendering is terribly ugly for some fonts, such as
-    # Roboto and Open Sans. Arial seems to work nicely.
-    file: "arialn.ttf"  # Arial Narrow
+  # note: Font rendering is terribly ugly for some fonts, such as
+  # Roboto and Open Sans. Arial seems to work nicely.
+  - file: "arialn.ttf"  # Arial Narrow
     id: main_font
     size: 18
-    glyphs: "0123456789"
+    glyphs: "0123456789c/kWh\u200A"  # U+200A = hair space
+  - file: "arialn.ttf"  # Arial Narrow
+    id: cur_price_font
+    size: 36
+    glyphs: "0123456789.,-"
 
 image:
   - file: "mdi:robot-dead-outline"
