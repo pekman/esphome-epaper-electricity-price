@@ -234,3 +234,17 @@ time:
 binary_sensor:
   - platform: status
     name: status
+
+sensor:
+  - platform: wifi_signal
+    name: "WiFi RSSI"
+    entity_category: diagnostic
+    update_interval: 5min
+
+button:
+  - platform: restart
+    name: "Restart"
+    entity_category: config
+  - platform: safe_mode
+    name: "Restart (safe mode)"
+    entity_category: config
