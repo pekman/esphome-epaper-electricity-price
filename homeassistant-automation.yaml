@@ -1,6 +1,7 @@
 alias: "Update electricity price display"
 description: >-
-  Update electricity price display when price sensor receives new values
+  Update electricity price display when display is connected or price
+  sensor receives new values
 trigger:
   - platform: state
     entity_id: sensor.nordpool
