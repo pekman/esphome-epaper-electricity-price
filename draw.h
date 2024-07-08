@@ -8,6 +8,17 @@
 #include "dither.h"
 
 
+// true if price is above warning threshold, regardless of whether
+// price warning is enabled
+bool price_at_warning_level = false;
+
+
+inline void on_price_warning_switch_change() {
+  if (price_at_warning_level)
+    id(epaper).update();
+}
+
+
 template<typename T>
 static void draw(T& it) {
 
@@ -111,9 +122,11 @@ static void draw(T& it) {
       font, TextAlign::TOP_LEFT,
       u8"c\u200A/\u200AkWh");  // U+200A = hair space
 
-    // Show warning if price too high. Use gradient values. If within
-    // gradient, show black icon. If above gradient, show red icon.
-    if (price >= id(gradient_bottom).state) {
+    // Check if price at warning level. Show warning if warnings
+    // enabled. Use gradient values. If within gradient, show black
+    // icon. If above gradient, show red icon.
+    price_at_warning_level = price >= id(gradient_bottom).state;
+    if (price_at_warning_level && id(price_warning_switch).state) {
       esphome::image::Image* img = &id(price_alert_icon);
       bool center = img->get_width() < CUR_PRICE_WIDTH;
       it.image(
