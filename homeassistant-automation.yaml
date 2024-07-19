@@ -9,6 +9,11 @@ trigger:
   - platform: state
     entity_id: binary_sensor.electricity_price_display_status
     to: "on"
+condition:
+  # if device not connected, don't try to send data
+  - condition: state
+    entity_id: binary_sensor.electricity_price_display_status
+    state: "on"
 variables:
   entity_id: sensor.nordpool
 action:
