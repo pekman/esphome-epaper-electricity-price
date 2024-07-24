@@ -21,8 +21,20 @@ action:
     data: |-
       {% set start = state_attr(entity_id, "raw_today")[0].start -%}
       {
-        "prices": {{ state_attr(entity_id, "today") +
-                     state_attr(entity_id, "tomorrow")|default([]) }},
+        "prices": [
+          {# Send values. Stop at null or NaN. -#}
+          {%- for val in state_attr(entity_id, "today") +
+                         state_attr(entity_id, "tomorrow") | default([]) -%}
+            {# There seems to be no way to send NaN values, and we
+               can't skip values without messing up hours. So, let's
+               send values until we hit an invalid value. -#}
+            {% if val is not is_number -%}
+              {% break -%}
+            {% endif -%}
+            {% if not loop.first %}, {% endif -%}
+            {{ val -}}
+          {% endfor -%}
+        ],
         "start_year": {{ start.year }},
         "start_month": {{ start.month }},
         "start_day": {{ start.day }}
