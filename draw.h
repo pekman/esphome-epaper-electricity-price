@@ -8,6 +8,22 @@
 #include "dither.h"
 
 
+// Localization settings.
+// Characters used in these should be included in font[].glyphs in the
+// yaml file.
+
+const char DECIMAL_SEPARATOR = ',';
+
+const char PRICE_UNIT[] = u8"c\u200A/\u200AkWh";
+// (U+200A = hair space)
+
+// date format as printf argument list
+// (not using strftime, because there is no way to print numeric
+// months without leading zero)
+#define CUR_DATE_PRINTF(t) u8"%u.\u2009%u.", t.day_of_month, t.month
+// (U+2009 = thin space)
+
+
 // true if price is above warning threshold, regardless of whether
 // price warning is enabled
 bool price_at_warning_level = false;
@@ -31,11 +47,8 @@ static void draw(T& it) {
 
   const int HOUR_INDICATOR_HEIGHT = 4;
 
-  const int CUR_PRICE_TOP = 10;
+  const int CUR_PRICE_TOP = 3;
   const int CUR_PRICE_WIDTH = 48;
-
-  // this should be in font[].glyphs in the yaml file:
-  const char DECIMAL_SEPARATOR = ',';
 
   const int GRAPH_WIDTH = 48*BAR_WIDTH;
   const int GRAPH_HEIGHT = GRAPH_YGRID_HEIGHT + GRAPH_MARGIN_TOP;
@@ -48,6 +61,13 @@ static void draw(T& it) {
   esphome::font::Font* font = &id(main_font);
   esphome::font::Font* price_font = &id(cur_price_font);
   const Color& color_red = id(red);
+
+  static const int cur_date_height = font->get_height();
+  static const int cur_date_baseline_from_bottom =
+    cur_date_height - font->get_baseline();
+  static const int cur_date_bottom =
+    screen_height - 1 + cur_date_baseline_from_bottom;
+  static const int price_alert_icon_bottom = cur_date_bottom - cur_date_height;
 
   const auto& prices = id(hourly_prices);
   auto prices_it = prices.cbegin();
@@ -118,9 +138,9 @@ static void draw(T& it) {
       price_font, TextAlign::TOP_LEFT,
       str);
     it.print(
-      0, CUR_PRICE_TOP + price_font->get_height() + 3,
+      0, CUR_PRICE_TOP + price_font->get_height(),
       font, TextAlign::TOP_LEFT,
-      u8"c\u200A/\u200AkWh");  // U+200A = hair space
+      PRICE_UNIT);
 
     // Check if price at warning level. Show warning if warnings
     // enabled. Use gradient values. If within gradient, show black
@@ -131,7 +151,7 @@ static void draw(T& it) {
       bool center = img->get_width() < CUR_PRICE_WIDTH;
       it.image(
         center ? CUR_PRICE_WIDTH/2 : 0,
-        screen_height - 1,
+        price_alert_icon_bottom,
         img,
         center ? ImageAlign::BOTTOM_CENTER : ImageAlign::BOTTOM_LEFT,
         price < id(gradient_top).state
@@ -139,6 +159,14 @@ static void draw(T& it) {
         : color_red);
     }
   }
+
+  // Print current date.
+  // This should make it more noticable when device loses power and
+  // displays old data.
+  it.printf(
+    CUR_PRICE_WIDTH/2, cur_date_bottom,
+    font, TextAlign::BOTTOM_CENTER,
+    CUR_DATE_PRINTF(start_date));
 
   // calculate and draw graph
 

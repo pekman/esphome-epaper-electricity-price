@@ -145,7 +145,14 @@ font:
   - file: "arialn.ttf"  # Arial Narrow
     id: main_font
     size: 18
-    glyphs: "0123456789c/kWh\u200A"  # U+200A = hair space
+    # U+2009 = thin space
+    # U+200A = hair space
+    glyphs: "0123456789c/kWh\u2009\u200A"
+    extras:
+      # "." is annoyingly small at this font size, just 1 pixel. Let's
+      # use bold "."
+      file: "arialnb.ttf"  # Arial Narrow bold
+      glyphs: "."
   - file: "arialn.ttf"  # Arial Narrow
     id: cur_price_font
     size: 36
