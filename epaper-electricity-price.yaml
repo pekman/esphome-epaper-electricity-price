@@ -250,6 +250,22 @@ switch:
       then:
         - lambda: "on_price_warning_switch_change();"
 
+button:
+  - platform: restart
+    name: "Restart"
+    entity_category: config
+  - platform: safe_mode
+    name: "Restart (safe mode)"
+    entity_category: config
+
+  - platform: template
+    name: "Redraw screen"
+    icon: "mdi:image-refresh-outline"
+    entity_category: config
+    on_press:
+      then:
+        - component.update: epaper
+
 
 time:
   - platform: homeassistant
@@ -284,11 +300,3 @@ sensor:
     name: "WiFi RSSI"
     entity_category: diagnostic
     update_interval: 5min
-
-button:
-  - platform: restart
-    name: "Restart"
-    entity_category: config
-  - platform: safe_mode
-    name: "Restart (safe mode)"
-    entity_category: config
