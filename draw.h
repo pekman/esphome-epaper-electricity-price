@@ -126,18 +126,25 @@ static void draw(T& it) {
   // print current price
   {
     char str[16];
-    snprintf(
-      str, sizeof(str), "%.*f",
-      current_price < 10.0f && current_price > -10.0f ? 1 : 0,
-      current_price);
-    for (char& c : str) {
-      if (c == '\0')
-        break;
-      if (c == '.') {
-        c = DECIMAL_SEPARATOR;
-        break;
+    if (std::isfinite(current_price)) {
+      snprintf(
+        str, sizeof(str), "%.*f",
+        current_price < 10.0f && current_price > -10.0f ? 1 : 0,
+        current_price);
+      for (char& c : str) {
+        if (c == '\0')
+          break;
+        if (c == '.') {
+          c = DECIMAL_SEPARATOR;
+          break;
+        }
       }
     }
+    else {
+      str[0] = '?';
+      str[1] = '\0';
+    }
+
     it.print(
       0, CUR_PRICE_TOP,
       price_font, TextAlign::TOP_LEFT,

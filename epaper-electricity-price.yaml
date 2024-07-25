@@ -156,7 +156,7 @@ font:
   - file: "arialn.ttf"  # Arial Narrow
     id: cur_price_font
     size: 36
-    glyphs: "0123456789.,-"
+    glyphs: "0123456789.,-?"
 
 image:
   - file: "mdi:robot-dead-outline"
