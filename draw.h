@@ -97,6 +97,14 @@ static void draw(T& it) {
     }
   }
 
+  float current_price = now.hour >= 0 && now.hour < 24
+    ? prices_it[now.hour]
+    : NAN;  // this shouldn't happen, but let's not crash if it does
+
+  bool show_past_hours = id(show_past_hours_switch).state;
+  if (!show_past_hours)
+    prices_it += now.hour;
+
   float max_price = -INFINITY;
   // Calculate max value NaN-safely.
   // If there are no non-NaN values, max_price = -INFINITY.
@@ -117,14 +125,11 @@ static void draw(T& it) {
 
   // print current price
   {
-    float price = now.hour >= 0 && now.hour < 24
-      ? prices_it[now.hour]
-      : NAN;  // this shouldn't happen, but let's not crash if it does
     char str[16];
     snprintf(
       str, sizeof(str), "%.*f",
-      price < 10.0f && price > -10.0f ? 1 : 0,
-      price);
+      current_price < 10.0f && current_price > -10.0f ? 1 : 0,
+      current_price);
     for (char& c : str) {
       if (c == '\0')
         break;
@@ -145,7 +150,7 @@ static void draw(T& it) {
     // Check if price at warning level. Show warning if warnings
     // enabled. Use gradient values. If within gradient, show black
     // icon. If above gradient, show red icon.
-    price_at_warning_level = price >= id(gradient_bottom).state;
+    price_at_warning_level = current_price >= id(gradient_bottom).state;
     if (price_at_warning_level && id(price_warning_switch).state) {
       esphome::image::Image* img = &id(price_alert_icon);
       bool center = img->get_width() < CUR_PRICE_WIDTH;
@@ -154,7 +159,7 @@ static void draw(T& it) {
         price_alert_icon_bottom,
         img,
         center ? ImageAlign::BOTTOM_CENTER : ImageAlign::BOTTOM_LEFT,
-        price < id(gradient_top).state
+        current_price < id(gradient_top).state
         ? esphome::display::COLOR_ON
         : color_red);
     }
@@ -195,9 +200,16 @@ static void draw(T& it) {
     BAR_WIDTH - 1);  // bar width
 
   // draw bars
-  for (int hour=0, left_x = graph_left;
-       prices_it != prices_end;
-       ++hour, ++prices_it, left_x += BAR_WIDTH)
+  {
+    int hour = 0;
+    int left_x = graph_left;
+    if (!show_past_hours) {
+      hour = now.hour;
+      left_x += hour * BAR_WIDTH;
+    }
+
+    for (; prices_it != prices_end;
+         ++hour, ++prices_it, left_x += BAR_WIDTH)
     {
       float height = std::round(
         GRAPH_YGRID_HEIGHT * *prices_it / max_ygrid_val);
@@ -230,6 +242,7 @@ static void draw(T& it) {
             it.horizontal_line(x, y, w, color_red);
       }
     }
+  }
 
   struct axis_label { int pos; const char* label; };
 
@@ -239,40 +252,47 @@ static void draw(T& it) {
     {24, "0"}, {30, "6"}, {36, "12"}, {42, "18"},
     {48, "0"}
   }) {
-    int x = graph_left + hour*BAR_WIDTH;
-    for (int y=0; y < GRAPH_HEIGHT; y += 3)
-      it.draw_pixel_at(x, y);
-    it.vertical_line(x, screen_height - graph_margin_bottom, 5);
-    it.print(
-      x, screen_height - graph_margin_bottom + 4,
-      font, TextAlign::TOP_CENTER,
-      label);
+    if (show_past_hours || hour >= now.hour) {
+      int x = graph_left + hour*BAR_WIDTH;
+      for (int y=0; y < GRAPH_HEIGHT; y += 3)
+        it.draw_pixel_at(x, y);
+      it.vertical_line(x, screen_height - graph_margin_bottom, 5);
+      it.print(
+        x, screen_height - graph_margin_bottom + 4,
+        font, TextAlign::TOP_CENTER,
+        label);
+    }
   }
 
   // y-axis grid
-  for (auto tick_val : yticks) {
-    int y = GRAPH_HEIGHT -
-      (GRAPH_YGRID_HEIGHT * tick_val) / max_ygrid_val;
-    auto label_str = std::to_string(tick_val);
-    const char* label = label_str.c_str();
+  {
+    int left_x = graph_left + (show_past_hours ? 0 : now.hour * BAR_WIDTH);
+    int right_x = graph_left + GRAPH_WIDTH;
 
-    for (int x = graph_left; x < graph_left + GRAPH_WIDTH; x += 3)
-      it.draw_pixel_at(x, y);
-    it.horizontal_line(graph_left - 4, y, 4);
-    it.print(
-      graph_left - 4 - 2, y,
-      font, TextAlign::CENTER_RIGHT,
-      label);
-    it.horizontal_line(graph_left + GRAPH_WIDTH, y, 4);
-    it.print(
-      graph_left + GRAPH_WIDTH + 4 + 2, y,
-      font, TextAlign::CENTER_LEFT,
-      label);
+    for (auto tick_val : yticks) {
+      int y = GRAPH_HEIGHT -
+        (GRAPH_YGRID_HEIGHT * tick_val) / max_ygrid_val;
+      auto label_str = std::to_string(tick_val);
+      const char* label = label_str.c_str();
+
+      for (int x = left_x; x < right_x; x += 3)
+        it.draw_pixel_at(x, y);
+      it.horizontal_line(left_x - 4, y, 4);
+      it.print(
+        left_x - 4 - 2, y,
+        font, TextAlign::CENTER_RIGHT,
+        label);
+      it.horizontal_line(right_x, y, 4);
+      it.print(
+        right_x + 4 + 2, y,
+        font, TextAlign::CENTER_LEFT,
+        label);
+    }
+    // gridline 0 without text or solid tick lines
+    // (text would overlap with x-axis labels)
+    for (int x = left_x - 4; x < right_x + 4; x += 3)
+      it.draw_pixel_at(x, GRAPH_HEIGHT);
   }
-  // gridline 0 without text or solid tick lines
-  // (text would overlap with x-axis labels)
-  for (int x = graph_left - 4; x < graph_left + GRAPH_WIDTH + 4; x += 3)
-    it.draw_pixel_at(x, GRAPH_HEIGHT);
 
   ESP_LOGD("draw", "Finished drawing.");
 }

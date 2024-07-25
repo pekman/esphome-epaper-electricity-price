@@ -223,6 +223,20 @@ number:
 
 switch:
   - platform: template
+    id: show_past_hours_switch
+    name: "Show past hours"
+    icon: "mdi:chart-bar"
+    entity_category: config
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    on_turn_on:
+      then:
+        - component.update: epaper
+    on_turn_off:
+      then:
+        - component.update: epaper
+
+  - platform: template
     id: price_warning_switch
     name: "Price warning"
     icon: "mdi:cash"
