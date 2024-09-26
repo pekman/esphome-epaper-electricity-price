@@ -23,10 +23,14 @@ Preparation
      `display`
    - connect power pins to NodeMCU's 3V and G pins
 2. install [ESPHome][esphome]
-3. build and flash: `esphome run epaper-electricity-price.yaml`
-4. add the Home Assistant automation in `homeassistant-automation.yaml`
+3. create `secrets.yaml` and add values for all `!secret` references in the
+   main yaml file
+4. download the font Arial from wherever (it's copyrighted), and put
+   `arial.ttf`, `arialn.ttf`, and `arialnb.ttf` in this directory
+5. build and flash: `esphome run epaper-electricity-price.yaml`
+6. add the Home Assistant automation in `homeassistant-automation.yaml`
    - it can be copy-pasted to Home Assistant's web interface
-5. adjust settings in Home Assistant device configuration screen
+7. adjust settings in Home Assistant device configuration screen
 
 If the display is sometimes garbled, install a 0.1 µF decoupling capacitor
 between VCC and GND on the e-paper module.
