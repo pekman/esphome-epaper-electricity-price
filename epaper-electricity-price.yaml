@@ -175,10 +175,16 @@ spi:
 display:
   - platform: waveshare_epaper
     id: epaper
-    cs_pin: D4  # also LED pin; LED used as update indicator
-    dc_pin: D5
-    reset_pin: D6
-    busy_pin: D7
+
+    # pin choices:
+    # - D1, D2: safe pins for any use; low on boot
+    # - D5, D6, D7: pretty safe for any use; briefly high on boot
+    # - D8: suitable for output only or boot may fail
+    cs_pin: D5  # output, active low
+    dc_pin: D6  # output
+    busy_pin: D7  # input
+    reset_pin: D8  # output, active low
+
     model: 2.90in3c
     rotation: 90
     update_interval: never
